@@ -1,97 +1,48 @@
-import os
-import chess
-import numpy as np
-import pandas as pd
-from tensorflow import keras
-from tensorflow.keras import layers
+import chess as ch
 
-os.chdir('C:\Users\Moata\OneDrive\Documents\uni2022-2023\Winter2023\HackED2023LizardWizards\AI\lichess.pgn')
-df = pd.read.csv('chess_normalized.csv')
-data = df['moves'].tolist()[:500]
-split_data = []
-indice = 500
 
-chess_dict = {
-    'p' : [1,0,0,0,0,0,0,0,0,0,0,0],
-    'P' : [0,0,0,0,0,0,1,0,0,0,0,0],
-    'n' : [0,1,0,0,0,0,0,0,0,0,0,0],
-    'N' : [0,0,0,0,0,0,0,1,0,0,0,0],
-    'b' : [0,0,1,0,0,0,0,0,0,0,0,0],
-    'B' : [0,0,0,0,0,0,0,0,1,0,0,0],
-    'r' : [0,0,0,1,0,0,0,0,0,0,0,0],
-    'R' : [0,0,0,0,0,0,0,0,0,1,0,0],
-    'q' : [0,0,0,0,1,0,0,0,0,0,0,0],
-    'Q' : [0,0,0,0,0,0,0,0,0,0,1,0],
-    'k' : [0,0,0,0,0,1,0,0,0,0,0,0],
-    'K' : [0,0,0,0,0,0,0,0,0,0,0,1],
-    '.' : [0,0,0,0,0,0,0,0,0,0,0,0],
-}
-alpha_dict = {
-    'a' : [0,0,0,0,0,0,0],
-    'b' : [1,0,0,0,0,0,0],
-    'c' : [0,1,0,0,0,0,0],
-    'd' : [0,0,1,0,0,0,0],
-    'e' : [0,0,0,1,0,0,0],
-    'f' : [0,0,0,0,1,0,0],
-    'g' : [0,0,0,0,0,1,0],
-    'h' : [0,0,0,0,0,0,1],
-}
-number_dict = {
-    1 : [0,0,0,0,0,0,0],
-    2 : [1,0,0,0,0,0,0],
-    3 : [0,1,0,0,0,0,0],
-    4 : [0,0,1,0,0,0,0],
-    5 : [0,0,0,1,0,0,0],
-    6 : [0,0,0,0,1,0,0],
-    7 : [0,0,0,0,0,1,0],
-    8 : [0,0,0,0,0,0,1],
-}
+class kingGizzard:
+    def __init__(self, board, maxDepth, color):
+        self.board = board
+        self.maxDepth = maxDepth
+        self.color = color
 
-def make_matrix(board):
-    pgn = board.epd()
-    foo = []
-    pieces = pgn.split(" ", 1)[0]
-    rows = pieces.split("/")
-    for row in rows:
-        foo2 = []
-        for item in row:
-            if item.isdigit():
-                for _ in range(0, int(item)):
-                    foo2.append(chess_dict['.'])
+    def engine(self, candidate, depth):
+        if depth == self.maxDepth or self.board.legal_moves.count() == 0:
+            return self.evaluate()
+
+        else:
+            ## list of legal moves for the current board
+            moveList = list(self.board.legal_moves)
+
+            ##  init candidate
+            newCandidate = None
+
+            if depth % 2 != 0:
+                newCandidate = float("-inf")
             else:
-                foo2.append(item)
-            foo.append(foo2)
-        return foo
+                newCandidate = float("inf")
 
-def translate(matrix, chess_dict):
-    rows = []
-    for row in matrix:
-        terms = []
-        for term in row:
-            term.append(chess_dict[term])
-        rows.append(terms)
-    return rows
+            for i in moveList:
+                ## play i
+                self.board.push(i)
 
-for point in data[:indice]:
-    point = point.split()
-    split_data.append(point)
+                ## recursive call
+                ## get value
+                value = self.engine(newCandidate, depth + 1)
 
-data = []
-for game in split_data:
-    board = chess.Board()
-    for move in game:
-        board_ready = board.copy()
-        data.append(board.copy())
-        board.push_san(move)
+                ## minmax without pruning
+                ## basic
 
-trans_data = []
-for board in data:
-    matrix = make_matrix(board)
-    trans = translate(matrix, chess_dict)
-    trans_data.append(trans)
+                ## if maxim (engine turn)
+                if value > newCandidate and depth % 2 != 0:
+                    newCandidate = value
+                    if depth == 1:
+                        move = i
 
-pieces = []
-alphas = []
-numbers = []
+                ## if minim (opponent turn)
+                elif value < newCandidate and depth % 2 == 0:
+                    newCandidate = value
 
-# board_inputs = keras.
+                ## alpha-beta pruning
+                ## if previous candidate is better than new candidate
