@@ -16,6 +16,7 @@ class kingGizzard:
         for i in range(64):
             compt += self.squareResPoints(ch.SQUARES[i])
         compt += self.mateOppurtunity() + self.opening() + 0.001 * rd.random()
+        return compt
 
     def opening(self):
         if self.board.fullmove_number < 10:
