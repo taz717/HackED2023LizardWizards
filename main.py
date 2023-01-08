@@ -1,4 +1,4 @@
-import kingGizzard as kg
+from lib import kingGizzard as kg
 import chess as ch
 
 
@@ -27,6 +27,9 @@ class Main:
         engine = kg.kingGizzard(self.board, maxDepth, color)
         self.board.push(engine.getBestMove())
 
+    def translateBoards(self, previousTurn):
+        print(previousTurn == self.board)
+
     def startGame(self):
         ## get opponent color
         color = None
@@ -38,7 +41,9 @@ class Main:
         if color == "b":
             while self.board.is_checkmate() == False:
                 print("King Gizzard is thinking...")
+                temp = self.board
                 self.playEngineMove(maxDepth, ch.WHITE)
+                self.translateBoards(temp)
                 print(self.board)
                 self.playOpponentMove()
             print(self.board)
