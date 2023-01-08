@@ -90,8 +90,6 @@ class kingGizzard:
                 ## basic
 
                 ## if maxim (engine turn)
-                # print("This is value:", value)
-                # print("this is newCandidate:", newCandidate)
                 if value > newCandidate and depth % 2 != 0:
                     newCandidate = value
                     if depth == 1:
