@@ -6,12 +6,14 @@ numToLetterDict = {1: "A", 2: "B", 3: "C", 4: "D", 5: "E", 6: "F", 7: "G", 8: "H
 
 class Main:
     def __init__(self, board=ch.Board):
+        self.arduinoData = serial.Serial('com6', 115200)
+
         self.board = board
 
     ## play opponent move
     def playOpponentMove(self):
         try:
-            print(self.board.legal_moves)
+            print(list(self.board.legal_moves))
             print("""To undo your last move, type "undo".""")
             ## get user input
             play = input("your move: ")
@@ -20,8 +22,17 @@ class Main:
                 self.board.pop()
                 self.playOpponentMove()
                 return
-            self.board.push_san(play)
+            
+            self.board.push(self.board.parse_uci(play))
+            #write acknoledgement back to arduino that it was a valid move
         except:
+            print("INVALID MOVE... Return piece to previous position")
+            
+            # check from Arduino if piece is returned
+            # for now set to dummy variable and skip loop
+            returned = True
+            while (not returned):
+                pass
             self.playOpponentMove()
 
     def makeMatrix(self, board):  # type(board) == chess.Board()
