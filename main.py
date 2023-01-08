@@ -1,6 +1,6 @@
 from lib import kingGizzard as kg
 import chess as ch
-
+import serial
 # import serial
 
 numToLetterDict = {1: "A", 2: "B", 3: "C", 4: "D", 5: "E", 6: "F", 7: "G", 8: "H"}
@@ -13,6 +13,64 @@ class Main:
 
         self.board = board
 
+    def getUserMove(self):
+        arduinoData = serial.Serial('com6', 115200)
+        start = (0,0)
+        end = (0,0)
+        dataPacket = arduinoData.readline()
+        dataPacket = str(dataPacket, 'utf-8')
+        dataPacket = dataPacket.strip('\r\n')
+        occupied = [int(x) for x in dataPacket.split(',')]
+        pieceLifted = False
+        oppPieceLifted = (-1,-1)
+        userTurn = True
+        while userTurn:
+            if arduinoData.inWaiting() != 0:
+                dataPacket = arduinoData.readline()
+                dataPacket = str(dataPacket, 'utf-8')
+                dataPacket = dataPacket.strip('\r\n')
+                new_occupancy = [int(x) for x in dataPacket.split(',')]
+                if new_occupancy != occupied and not pieceLifted :
+                    pieceLifted = True
+                    for i in range(len(occupied)):
+                        if occupied[i] != new_occupancy[i]:
+                            bit_string_old = '{0:b}'.format(occupied[i])
+                            bit_string_new = '{0:b}'.format(new_occupancy[i])
+                            for j in range(len(bit_string_new)):
+                                # find what has flipped to 0
+                                if bit_string_old[j]=='1' and bit_string_new[j]=='0':
+                                    start = (i,j)
+                                    break
+                            break
+                    occupied = new_occupancy
+                if new_occupancy != occupied and pieceLifted :
+                    for i in range(len(occupied)):
+                        if occupied[i] != new_occupancy[i]:
+                            bit_string_old = '{0:b}'.format(occupied[i])
+                            bit_string_new = '{0:b}'.format(new_occupancy[i])
+                            for j in range(len(bit_string_new)):
+                                # find what has flipped to 0
+                                if bit_string_old[j]=='0' and bit_string_new[j]=='1':
+                                    end = (i,j) #user piece has taken empty position
+                                    userTurn=False
+                                    break
+                                if bit_string_old[j]=='1' and bit_string_new[j]=='0':
+                                    # lifting up opponent piece
+                                    oppPieceLifted=(i,j)
+                                    userTurn=False
+                                    break
+                            break
+                    occupied = new_occupancy
+                if new_occupancy != occupied and oppPieceLifted!=(-1,-1) and pieceLifted:
+                    bit_string_old = '{0:b}'.format(occupied[oppPieceLifted[0]])
+                    bit_string_new = '{0:b}'.format(new_occupancy[oppPieceLifted[0]])
+                    if bit_string_old[oppPieceLifted[1]]=='0' and bit_string_new[oppPieceLifted[1]]=='1':
+                        end = (i,j) #user piece has taken empty position
+                        userTurn=False
+                        break
+                    occupied = new_occupancy
+        return chr(start[0]+97)+str(start[1]+1)+chr(end[0]+97)+str(end[1]+1)
+
     ## play opponent move
     def playOpponentMove(self):
         try:
@@ -21,6 +79,7 @@ class Main:
             print("""To undo your last move, type "undo".""")
             ## get user input
             play = input("your move: ")
+            
             if play == "undo":
                 self.board.pop()
                 self.board.pop()
@@ -28,7 +87,6 @@ class Main:
                 return
 
             self.board.push(self.board.parse_uci(play))
-            # write acknoledgement back to arduino that it was a valid move
         except:
             print("INVALID MOVE... Return piece to previous position")
 
