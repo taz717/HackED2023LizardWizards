@@ -1,0 +1,20 @@
+import time
+import serial
+import keyboard
+arduinoData = serial.Serial('com6',115200)
+time.sleep(1)
+i = 0
+
+while True:   
+    if arduinoData.inWaiting()!=0:
+        dataPacket = arduinoData.readline()
+        dataPacket = str(dataPacket,'utf-8')
+        dataPacket = dataPacket.strip('\r\n')
+        print(dataPacket)
+        time.sleep(0.1)
+    else:
+        cmd = input('Enter command: ')
+        arduinoData.write(str.encode(cmd+'\r\n'))
+        time.sleep(0.5)
+    
+    
