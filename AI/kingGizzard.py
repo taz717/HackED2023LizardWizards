@@ -16,6 +16,7 @@ class kingGizzard:
         for i in range(64):
             compt += self.squareResPoints(ch.SQUARES[i])
         compt += self.mateOppurtunity() + self.opening() + 0.001 * rd.random()
+        return compt
 
     def opening(self):
         if self.board.fullmove_number < 10:
@@ -89,6 +90,8 @@ class kingGizzard:
                 ## basic
 
                 ## if maxim (engine turn)
+                # print("This is value:", value)
+                # print("this is newCandidate:", newCandidate)
                 if value > newCandidate and depth % 2 != 0:
                     newCandidate = value
                     if depth == 1:
